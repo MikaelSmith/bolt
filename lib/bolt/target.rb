@@ -73,7 +73,8 @@ module Bolt
     end
 
     def host
-      @uri_obj.hostname
+      # Ensure we use brackets for IPv6 addresses
+      @uri_obj.host
     end
 
     # name is currently just uri but should be used instead to identify the

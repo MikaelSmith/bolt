@@ -2,6 +2,7 @@
 
 require 'bolt/node/errors'
 require 'bolt/node/output'
+require 'addressable/uri'
 
 module Bolt
   module Transport
@@ -36,8 +37,8 @@ module Bolt
             scheme = 'http'
             transport = :negotiate
           end
-          endpoint = "#{scheme}://#{target.host}:#{@port}/wsman"
-          options = { endpoint: endpoint,
+          endpoint = Addressable::URI.new(scheme: scheme, host: target.host, port: @port, path: 'wsman')
+          options = { endpoint: endpoint.to_s,
                       user: @user,
                       password: target.password,
                       retry_limit: 1,

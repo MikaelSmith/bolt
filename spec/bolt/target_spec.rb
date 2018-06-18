@@ -143,9 +143,9 @@ describe Bolt::Target do
     end
   end
 
-  it "strips brackets from ipv6 addresses in a uri" do
+  it "does not strip brackets from ipv6 addresses in a uri" do
     uri = Bolt::Target.new('ssh://[::1]:22')
-    expect(uri.host).to eq('::1')
+    expect(uri.host).to eq('[::1]')
   end
 
   it "can be copied" do
