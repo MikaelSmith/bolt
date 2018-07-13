@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'bolt/pal'
+require 'bolt/puppetdb'
+require 'bolt/util/on_access'
 
 Bolt::PAL.load_puppet
 
@@ -53,12 +55,6 @@ end
 
 module Bolt
   class Catalog
-    def in_env
-      Puppet::Pal.in_tmp_environment('bolt_apply', modulepath: ['~/bolt/modules/'], facts: @scope['facts']) do |pal|
-        yield pal
-      end
-    end
-
     def with_puppet_settings
       Dir.mktmpdir('bolt') do |dir|
         cli = []
@@ -72,15 +68,13 @@ module Bolt
       end
     end
 
-    def setup_node(node)
+    def setup_node(node, trusted)
       facts = Puppet.lookup(:pal_facts)
       node_facts = Puppet::Node::Facts.new(Puppet[:node_name_value], facts)
       node.fact_merge(node_facts)
 
       node.parameters = node.parameters.merge(Puppet.lookup(:pal_variables))
-      # TODO: setup server_facts
-      # TODO: setup trusted in params
-      # TODO: setup serverversion/clientversion in params
+      node.trusted_data = trusted
     end
 
     def compile_node(node)
@@ -101,6 +95,12 @@ module Bolt
     def compile_catalog(request)
       pal_main = request['code_ast'] || request['code_string']
       target = request['target']
+
+      pdb_client = Bolt::Util::OnAccess.new do
+        pdb_config = Bolt::PuppetDB::Config.new(nil, request['pdb_config'])
+        Bolt::PuppetDB::Client.from_config(pdb_config)
+      end
+
       with_puppet_settings do
         Puppet[:code] = ''
         Puppet[:node_name_value] = target['name']
@@ -111,9 +111,9 @@ module Bolt
           variables: target["variables"] || {}
         ) do |_pal|
           node = Puppet.lookup(:pal_current_node)
-          setup_node(node)
+          setup_node(node, target["trusted"])
 
-          Puppet.override(pal_main: pal_main) do
+          Puppet.override(pal_main: pal_main, bolt_pdb_client: pdb_client) do
             compile_node(node)
           end
         end
