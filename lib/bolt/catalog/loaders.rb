@@ -14,6 +14,15 @@ module Puppet
           'boltlib_system'
         )
       end
+
+      def pre_load
+        super
+
+        # Pre-populate Bolt datatypes
+        @puppet_system_loader.load(:type, 'target')
+        @puppet_system_loader.load(:type, 'result')
+        @puppet_system_loader.load(:type, 'resultset')
+      end
     end
   end
 end

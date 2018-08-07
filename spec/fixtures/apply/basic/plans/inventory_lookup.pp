@@ -3,6 +3,11 @@ plan basic::inventory_lookup(TargetSpec $nodes) {
   $target = get_targets('all')
   add_facts($target[1], {'added' => 'fact'})
 
+  apply($nodes) {
+    # Check we can use Target functions in a catalog
+    notice("Target 0: ${$target.name}")
+  }
+
   return apply($nodes) {
   	$t = get_targets('all')
     # Number of targets queried from inventory
