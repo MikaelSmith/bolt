@@ -94,6 +94,14 @@ describe "passes parsed AST to the apply_catalog task" do
       expect(notify[0]['parameters']['message']).to eq('hello ')
     end
 
+    it 'can use undefined plan parameters' do
+      result = run_cli_json(%w[plan run basic::undef] + config_flags)
+      notify = get_notifies(result)
+      expect(notify).to be_empty
+      logs = @log_output.readlines
+      expect(logs).not_to include(/WARN /)
+    end
+
     it 'applies a complex type from the modulepath' do
       result = run_cli_json(%w[plan run basic::type] + config_flags)
       report = result[0]['result']['report']
